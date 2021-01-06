@@ -14,6 +14,7 @@ app.use(cors({origin: true}))
 app.use(bodyparser.urlencoded({ extended: true }))
 app.use(bodyparser.json())
 
+// Use our own middleware for this, if the connection to the database is not valid, then return status 500 each time, otherwise proceed with the request.
 app.use((req, res, next) => {
     var connection = getConnection();
     if(connection === undefined || connection.readyState == 0){
@@ -46,6 +47,7 @@ var ipCheckMiddleware = (req, res, next) => {
     next()
 }
 
+// Get the count of entries belonging to this IP
 app.get("/statistics/count", ipCheckMiddleware, async (req, res) => {
     try {
         var count = await countByIP(req.clientIp || req.ip)
@@ -58,6 +60,7 @@ app.get("/statistics/count", ipCheckMiddleware, async (req, res) => {
     }
 })
 
+// Get the count of all the unique IPs we have in our database
 app.get("/statistics/distinct", ipCheckMiddleware, async (req, res) => {
     try {
         var count = await countDistinctIPs()

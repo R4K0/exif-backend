@@ -6,10 +6,12 @@ const { Schema } = mongoose;
 var connection;
 (async () => {
     try {
+        //If we managed to connect, return the connection object to the variable
         connection = await mongoose.connect(`mongodb://${config.host}:${config.port}/${config.collection}`, { useNewUrlParser: true, useUnifiedTopology: true })
 
         console.log(`Connected to the database! port: ${config.port}`);
     } catch (err) {
+        // If we didn't log the error
         console.log(err);
         console.log("Connection to DB failed!");
     }
@@ -50,6 +52,8 @@ logsSchema.methods.deleteLikeMe = function () {
     })
 }
 
+// This counts rows that have distinct IPs and that the IP exists.
+// In English: Count all the unique ips that accessed our service
 function countDistinctIPs() {
     return new Promise((resolve, reject) => {
         mongoose.model("logs").distinct('ip', { ip: { $exists: true } }, (err, res) => {
@@ -63,6 +67,7 @@ function countDistinctIPs() {
     })
 }
 
+// Simply count all the IPs that match our ip filter.
 function countByIP(ip) {
     return new Promise((resolve, reject) => {
         mongoose.model("logs").find({ ip: ip }, (err, res) => {
