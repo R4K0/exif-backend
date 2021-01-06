@@ -2,10 +2,19 @@ var mongoose = require("mongoose");
 var config = require("../config/database.json")
 const { Schema } = mongoose;
 
-// Connect us to our database.
-mongoose.connect(`mongodb://${config.host}:${config.port}/${config.collection}`, { useNewUrlParser: true, useUnifiedTopology: true }).then(() => {
-    console.log("Connected to the database!")
-})
+// Connect us to our database. Top-level await functions aren't a thing, so it had to be defined and called this way
+var connection;
+(async () => {
+    try {
+        connection = await mongoose.connect(`mongodb://${config.host}:${config.port}/${config.collection}`, { useNewUrlParser: true, useUnifiedTopology: true })
+
+        console.log(`Connected to the database! port: ${config.port}`);
+    } catch (err) {
+        console.log(err);
+        console.log("Connection to DB failed!");
+    }
+})()
+
 
 //Define our schema
 const logsSchema = new Schema({
@@ -41,8 +50,39 @@ logsSchema.methods.deleteLikeMe = function () {
     })
 }
 
+function countDistinctIPs() {
+    return new Promise((resolve, reject) => {
+        mongoose.model("logs").distinct('ip', { ip: { $exists: true } }, (err, res) => {
+            if (err) {
+                reject(err);
+                return;
+            }
+
+            resolve(res);
+        })
+    })
+}
+
+function countByIP(ip) {
+    return new Promise((resolve, reject) => {
+        mongoose.model("logs").find({ ip: ip }, (err, res) => {
+            if (err) {
+                reject(err);
+                return;
+            }
+
+            resolve(res);
+        })
+    })
+}
+
 //Create a model out of that schema
 const logsModel = mongoose.model("logs", logsSchema);
 
-//The model is how we interact with the database, so export it for other files to be able to use it.
-module.exports = logsModel;
+    //The model is how we interact with the database, so export it for other files to be able to use it.
+    module.exports = {
+        logsModel,
+        countDistinctIPs,
+        countByIP,
+        getConnection: function () { return connection; }
+    };

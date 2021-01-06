@@ -1,4 +1,4 @@
-var Log = require('./db/mongo.js');
+var { logsModel: Log, countDistinctIPs, getConnection, countByIP } = require('./db/mongo.js');
 var express = require( "express" );
 var bodyparser = require("body-parser");
 var requestIP = require("request-ip");
@@ -13,6 +13,16 @@ app.use(cors({origin: true}))
 // I use bodyparser in case I ever want to recieve the parameters in the body, don't need it now, but maybe in the future.
 app.use(bodyparser.urlencoded({ extended: true }))
 app.use(bodyparser.json())
+
+app.use((req, res, next) => {
+    var connection = getConnection();
+    if(connection === undefined || connection.readyState == 0){
+        res.status(500).send("Database is not running, sorry!")
+        return;
+    }
+
+    next();
+})
 
 // Rate limit the requests - The database will only respond to users actions 35 times in a 5 minute window to prevent spam.
 app.use( rateLimit({
@@ -35,6 +45,32 @@ var ipCheckMiddleware = (req, res, next) => {
 
     next()
 }
+
+app.get("/statistics/count", ipCheckMiddleware, async (req, res) => {
+    try {
+        var count = await countByIP(req.clientIp || req.ip)
+        
+        res.status(200).json({
+            count: count.length
+        });
+    } catch (error) {
+        res.sendStatus(500)
+    }
+})
+
+app.get("/statistics/distinct", ipCheckMiddleware, async (req, res) => {
+    try {
+        var count = await countDistinctIPs()
+
+        console.log(count);
+        
+        res.status(200).json({
+            count: count.length
+        });
+    } catch (error) {
+        res.sendStatus(500)
+    }
+})
 
 // This end-point logs our IP along with the current date (date is a default field, it'll be created automatically)
 app.post("/statistics/add", ipCheckMiddleware, async (req, res) => {
