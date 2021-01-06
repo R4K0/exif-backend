@@ -8,14 +8,14 @@ const path = require('path');
 
 var app = express()
 
-app.use(express.static(path.join(__dirname, '../build')))
-
-app.get('/*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../build', 'index.html'))
-})
-
 // So it is reachable!
-app.use(cors({ origin: true }))
+app.use(cors())
+
+app.use(function(req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
+  });
 
 // I use bodyparser in case I ever want to recieve the parameters in the body, don't need it now, but maybe in the future.
 app.use(bodyparser.urlencoded({ extended: true }))
@@ -121,6 +121,12 @@ app.delete("/statistics/delete", ipCheckMiddleware, async (req, res) => {
     }
 
     res.sendStatus(200)
+})
+
+app.use(express.static(path.join(__dirname, '../build')))
+
+app.get('/*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../build', 'index.html'))
 })
 
 app.listen(4000, () => {
