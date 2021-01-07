@@ -7,7 +7,7 @@ var connection;
 (async () => {
     try {
         //If we managed to connect, return the connection object to the variable
-        connection = await mongoose.connect(process.env.mongo_connecturl ? `` : `mongodb://${process.env.PORT || config.host}:${config.port}/${config.collection}`, { useNewUrlParser: true, useUnifiedTopology: true })
+        connection = await mongoose.connect(process.env.mongo_connecturl ? process.env.mongo_connecturl : `mongodb://${process.env.PORT || config.host}:${config.port}/${config.collection}`, { useNewUrlParser: true, useUnifiedTopology: true })
 
         console.log(`Connected to the database!`);
     } catch (err) {
